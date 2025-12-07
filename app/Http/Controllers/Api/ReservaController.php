@@ -600,6 +600,14 @@ class ReservaController extends Controller
             "Reserva actualizada por el usuario. Nuevas fechas: {$reserva->fecha_inicio} - {$reserva->fecha_fin}."
         );
 
+        // Notificar también al propio usuario (confirmación)
+        $this->enviarNotificaciones(
+            [$user->id],
+            'reserva_actualizada',
+            'Has actualizado tu reserva',
+            "Has actualizado tu reserva del recurso {$reserva->recurso->nombre} a las nuevas fechas {$reserva->fecha_inicio} - {$reserva->fecha_fin}."
+        );
+
         // Notificar a admins que el usuario cambió su reserva
         $adminIds = $this->obtenerAdminsIds();
         if (!empty($adminIds)) {
@@ -616,6 +624,7 @@ class ReservaController extends Controller
             'reserva' => $reserva,
         ]);
     }
+
 
     // ============= CANCELAR RESERVA (ADMIN O DUEÑO) =============
     /**
