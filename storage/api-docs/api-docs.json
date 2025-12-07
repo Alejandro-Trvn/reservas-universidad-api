@@ -1,0 +1,2511 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API Sistema de Reservas - Universidad",
+        "description": "Backend para la gestión de reservas de recursos (salas, equipos, etc.) con autenticación JWT y roles admin/usuario.",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Iniciar sesión y obtener token JWT",
+                "description": "Recibe email y password, valida credenciales y devuelve un token JWT para usar en el resto de endpoints protegidos.",
+                "operationId": "222b2625838e3c57e017987f73598fda",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "example": "admin@uni.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "secret123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login exitoso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "access_token": {
+                                            "type": "string",
+                                            "example": "eyJ0eXAiOiJKV1QiLCJhbGciOi..."
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "example": "bearer"
+                                        },
+                                        "expires_in": {
+                                            "type": "integer",
+                                            "example": 7200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Credenciales inválidas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Credenciales inválidas"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Los datos proporcionados no son válidos"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/me": {
+            "get": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Obtener información del usuario autenticado",
+                "operationId": "8367feff40ba10e43187792cad3132c1",
+                "responses": {
+                    "200": {
+                        "description": "Usuario autenticado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Admin Universidad"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "example": "admin@uni.com"
+                                        },
+                                        "role": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "nombre": {
+                                                    "type": "string",
+                                                    "example": "admin"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Cerrar sesión (invalidar token actual)",
+                "description": "Invalida el token JWT actual. El token deja de ser válido y el usuario deberá volver a iniciar sesión.",
+                "operationId": "ad65cbbd4e9f201619eae184a5961a98",
+                "responses": {
+                    "200": {
+                        "description": "Logout exitoso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Sesión cerrada correctamente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token inválido o no enviado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/auth/change-password-first-login": {
+            "post": {
+                "tags": [
+                    "Autenticación"
+                ],
+                "summary": "Cambiar contraseña en el primer inicio de sesión",
+                "description": "Permite a un usuario cambiar su contraseña obligatoriamente en el primer inicio de sesión.",
+                "operationId": "6df5725c7a7fc6b89c3ca9e08fa6de72",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id",
+                                    "new_password",
+                                    "new_password_confirmation"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "new_password": {
+                                        "type": "string",
+                                        "example": "nuevaSecret123"
+                                    },
+                                    "new_password_confirmation": {
+                                        "type": "string",
+                                        "example": "nuevaSecret123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Contraseña cambiada exitosamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Contraseña cambiada correctamente. Ahora puede iniciar sesión."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Los datos proporcionados no son válidos"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/reservas/{id}/historial": {
+            "get": {
+                "tags": [
+                    "Historial de Reservas"
+                ],
+                "summary": "Ver historial de una reserva",
+                "description": "Obtiene el historial completo de cambios de una reserva específica, ordenado cronológicamente. Los usuarios normales solo pueden ver el historial de sus propias reservas.",
+                "operationId": "8404ced2049f604fb2fb720680cc423a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la reserva",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Historial de la reserva",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "reserva_id": {
+                                                "type": "integer",
+                                                "example": 15
+                                            },
+                                            "user_id": {
+                                                "type": "integer",
+                                                "example": 5
+                                            },
+                                            "accion": {
+                                                "description": "Tipo de acción: creada, actualizada_admin, actualizada_usuario, cancelada_admin, cancelada_usuario",
+                                                "type": "string",
+                                                "example": "creada"
+                                            },
+                                            "detalle": {
+                                                "type": "string",
+                                                "example": "Reserva creada para el recurso Aula 101 del 2025-12-10 08:00:00 al 2025-12-10 10:00:00."
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-12-07T10:30:00.000000Z"
+                                            },
+                                            "user": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Juan Pérez"
+                                                    },
+                                                    "email": {
+                                                        "type": "string",
+                                                        "example": "juan@universidad.edu"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado para ver el historial de esta reserva"
+                    },
+                    "404": {
+                        "description": "Reserva no encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notificaciones": {
+            "get": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Listar notificaciones del usuario",
+                "description": "Obtiene la lista de notificaciones del usuario autenticado, ordenadas por fecha de creación (más recientes primero). Permite filtrar solo las no leídas.",
+                "operationId": "4a5488228077528a278bea003da9a3cc",
+                "parameters": [
+                    {
+                        "name": "solo_no_leidas",
+                        "in": "query",
+                        "description": "Filtrar solo notificaciones no leídas",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de notificaciones",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "user_id": {
+                                                "type": "integer",
+                                                "example": 5
+                                            },
+                                            "tipo": {
+                                                "type": "string",
+                                                "example": "reserva_creada"
+                                            },
+                                            "titulo": {
+                                                "type": "string",
+                                                "example": "Reserva creada correctamente"
+                                            },
+                                            "mensaje": {
+                                                "type": "string",
+                                                "example": "Has reservado el recurso Aula 101 del 2025-12-10 08:00:00 al 2025-12-10 10:00:00."
+                                            },
+                                            "leida": {
+                                                "type": "boolean",
+                                                "example": false
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-12-07T10:30:00.000000Z"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notificaciones/{id}/leer": {
+            "put": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Marcar notificación como leída",
+                "description": "Marca una notificación específica del usuario autenticado como leída. Solo el propietario de la notificación puede realizar esta acción.",
+                "operationId": "a18ce04f7d4e5dae08a80cb06665f37f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la notificación",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notificación marcada como leída",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notificación marcada como leída"
+                                        },
+                                        "notificacion": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "tipo": {
+                                                    "type": "string",
+                                                    "example": "reserva_creada"
+                                                },
+                                                "titulo": {
+                                                    "type": "string",
+                                                    "example": "Reserva creada correctamente"
+                                                },
+                                                "mensaje": {
+                                                    "type": "string",
+                                                    "example": "Has reservado el recurso Aula 101."
+                                                },
+                                                "leida": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-07T10:30:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Notificación no encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/notificaciones/marcar-todas-leidas": {
+            "put": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Marcar todas las notificaciones como leídas",
+                "description": "Marca todas las notificaciones no leídas del usuario autenticado como leídas en una sola operación.",
+                "operationId": "69dbf08b85ef7395bb89708a2f1e8d46",
+                "responses": {
+                    "200": {
+                        "description": "Todas las notificaciones marcadas como leídas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Todas las notificaciones han sido marcadas como leídas"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recursos": {
+            "get": {
+                "tags": [
+                    "Recursos"
+                ],
+                "summary": "Listar recursos activos",
+                "description": "Obtiene la lista de recursos activos con opciones de filtrado por tipo y disponibilidad (cualquier usuario autenticado).",
+                "operationId": "873571b93ee782b6112e2b8169b3c207",
+                "parameters": [
+                    {
+                        "name": "tipo_recurso_id",
+                        "in": "query",
+                        "description": "Filtrar por ID del tipo de recurso",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "disponible",
+                        "in": "query",
+                        "description": "Filtrar por disponibilidad general (0=no disponible, 1=disponible)",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de recursos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "tipo_recurso_id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "nombre": {
+                                                "type": "string",
+                                                "example": "Aula 101"
+                                            },
+                                            "descripcion": {
+                                                "type": "string",
+                                                "example": "Aula con capacidad para 30 personas"
+                                            },
+                                            "ubicacion": {
+                                                "type": "string",
+                                                "example": "Edificio A, Primer Piso"
+                                            },
+                                            "capacidad": {
+                                                "type": "integer",
+                                                "example": 30
+                                            },
+                                            "disponibilidad_general": {
+                                                "type": "boolean",
+                                                "example": true
+                                            },
+                                            "estado": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "tipo_recurso": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "nombre": {
+                                                        "type": "string",
+                                                        "example": "Aula"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Recursos"
+                ],
+                "summary": "Crear un nuevo recurso",
+                "description": "Crea un nuevo recurso en el sistema (solo administradores).",
+                "operationId": "ed6eb6ae6fa8ce1ae83d2e1dec8e5294",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "tipo_recurso_id",
+                                    "nombre"
+                                ],
+                                "properties": {
+                                    "tipo_recurso_id": {
+                                        "description": "ID del tipo de recurso (debe existir)",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "nombre": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Aula Magna"
+                                    },
+                                    "descripcion": {
+                                        "type": "string",
+                                        "example": "Auditorio principal con capacidad para 200 personas"
+                                    },
+                                    "ubicacion": {
+                                        "type": "string",
+                                        "maxLength": 150,
+                                        "example": "Edificio Principal, Tercer Piso"
+                                    },
+                                    "capacidad": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "example": 200
+                                    },
+                                    "disponibilidad_general": {
+                                        "description": "Si no se especifica, por defecto es true",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Recurso creado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "tipo_recurso_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "nombre": {
+                                            "type": "string",
+                                            "example": "Aula Magna"
+                                        },
+                                        "descripcion": {
+                                            "type": "string",
+                                            "example": "Auditorio principal con capacidad para 200 personas"
+                                        },
+                                        "ubicacion": {
+                                            "type": "string",
+                                            "example": "Edificio Principal, Tercer Piso"
+                                        },
+                                        "capacidad": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "disponibilidad_general": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "estado": {
+                                            "type": "integer",
+                                            "example": 1
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "422": {
+                        "description": "Error de validación"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recursos/{id}": {
+            "get": {
+                "tags": [
+                    "Recursos"
+                ],
+                "summary": "Ver detalles de un recurso",
+                "description": "Obtiene la información detallada de un recurso específico (cualquier usuario autenticado).",
+                "operationId": "106cec38241d87a2a7bf3fe094a4d2b6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del recurso",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Información del recurso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "tipo_recurso_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "nombre": {
+                                            "type": "string",
+                                            "example": "Laboratorio de Computación 1"
+                                        },
+                                        "descripcion": {
+                                            "type": "string",
+                                            "example": "Laboratorio con 25 computadoras"
+                                        },
+                                        "ubicacion": {
+                                            "type": "string",
+                                            "example": "Edificio B, Segundo Piso"
+                                        },
+                                        "capacidad": {
+                                            "type": "integer",
+                                            "example": 25
+                                        },
+                                        "disponibilidad_general": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "estado": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "tipo_recurso": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "nombre": {
+                                                    "type": "string",
+                                                    "example": "Laboratorio"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Recursos"
+                ],
+                "summary": "Actualizar un recurso",
+                "description": "Actualiza un recurso existente (solo administradores). Si tiene reservas activas, solo permite actualizar nombre, descripción y ubicación.",
+                "operationId": "21c58ad3d13a00ec2f1dde87e8687267",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del recurso a actualizar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "tipo_recurso_id": {
+                                        "description": "Solo editable si no hay reservas activas",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "nombre": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Aula 101 - Renovada"
+                                    },
+                                    "descripcion": {
+                                        "type": "string",
+                                        "example": "Aula renovada con proyector y aire acondicionado"
+                                    },
+                                    "ubicacion": {
+                                        "type": "string",
+                                        "maxLength": 150,
+                                        "example": "Edificio A, Primer Piso, Ala Norte"
+                                    },
+                                    "capacidad": {
+                                        "description": "Solo editable si no hay reservas activas",
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "example": 35
+                                    },
+                                    "disponibilidad_general": {
+                                        "description": "Solo editable si no hay reservas activas",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "estado": {
+                                        "description": "0=inactivo, 1=activo, 2=eliminado. Solo editable si no hay reservas activas",
+                                        "type": "integer",
+                                        "enum": [
+                                            0,
+                                            1,
+                                            2
+                                        ],
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Recurso actualizado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Recurso actualizado correctamente"
+                                        },
+                                        "recurso": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "tipo_recurso_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "nombre": {
+                                                    "type": "string",
+                                                    "example": "Aula 101 - Renovada"
+                                                },
+                                                "descripcion": {
+                                                    "type": "string",
+                                                    "example": "Aula renovada con proyector y aire acondicionado"
+                                                },
+                                                "ubicacion": {
+                                                    "type": "string",
+                                                    "example": "Edificio A, Primer Piso, Ala Norte"
+                                                },
+                                                "capacidad": {
+                                                    "type": "integer",
+                                                    "example": 35
+                                                },
+                                                "disponibilidad_general": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "estado": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado"
+                    },
+                    "422": {
+                        "description": "Error de validación o intento de editar campos no permitidos cuando tiene reservas activas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Recursos"
+                ],
+                "summary": "Eliminar un recurso",
+                "description": "Elimina lógicamente un recurso (cambia su estado a 2) solo si no tiene reservas activas (solo administradores). Si tiene reservas activas, se sugiere marcarlo como inactivo.",
+                "operationId": "48c394af46b1922256f7e0fc64ecda3f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del recurso a eliminar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recurso eliminado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Recurso eliminado correctamente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado"
+                    },
+                    "422": {
+                        "description": "No se puede eliminar porque tiene reservas activas"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reservas": {
+            "get": {
+                "tags": [
+                    "Reservas"
+                ],
+                "summary": "Listar reservas",
+                "description": "Obtiene la lista de reservas. Los administradores ven todas las reservas con filtros opcionales. Los usuarios normales solo ven sus propias reservas.",
+                "operationId": "eb08731b26586d48c539a7ff8a777649",
+                "parameters": [
+                    {
+                        "name": "estado",
+                        "in": "query",
+                        "description": "Filtrar por estado (solo admin)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "activa",
+                                "cancelada"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Filtrar por ID de usuario (solo admin)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "recurso_id",
+                        "in": "query",
+                        "description": "Filtrar por ID de recurso (solo admin)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "desde",
+                        "in": "query",
+                        "description": "Filtrar reservas desde esta fecha (solo admin)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2025-12-01 00:00:00"
+                        }
+                    },
+                    {
+                        "name": "hasta",
+                        "in": "query",
+                        "description": "Filtrar reservas hasta esta fecha (solo admin)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2025-12-31 23:59:59"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de reservas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "user_id": {
+                                                "type": "integer",
+                                                "example": 5
+                                            },
+                                            "recurso_id": {
+                                                "type": "integer",
+                                                "example": 3
+                                            },
+                                            "fecha_inicio": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-12-10 08:00:00"
+                                            },
+                                            "fecha_fin": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-12-10 10:00:00"
+                                            },
+                                            "estado": {
+                                                "type": "string",
+                                                "example": "activa"
+                                            },
+                                            "comentarios": {
+                                                "type": "string",
+                                                "example": "Reserva para clase de programación"
+                                            },
+                                            "user": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Juan Pérez"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "recurso": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 3
+                                                    },
+                                                    "nombre": {
+                                                        "type": "string",
+                                                        "example": "Aula 101"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Reservas"
+                ],
+                "summary": "Crear una nueva reserva",
+                "description": "Crea una nueva reserva para el usuario autenticado. Valida disponibilidad del recurso y que no haya traslapes con otras reservas activas. Envía notificaciones al usuario y a los administradores.",
+                "operationId": "eed603a4a26e6811d4be8b9dc990dbc7",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "recurso_id",
+                                    "fecha_inicio",
+                                    "fecha_fin"
+                                ],
+                                "properties": {
+                                    "recurso_id": {
+                                        "description": "ID del recurso a reservar",
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "fecha_inicio": {
+                                        "description": "Debe ser posterior a la fecha actual",
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-12-10 08:00:00"
+                                    },
+                                    "fecha_fin": {
+                                        "description": "Debe ser posterior a fecha_inicio",
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-12-10 10:00:00"
+                                    },
+                                    "comentarios": {
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "example": "Reserva para clase de programación"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Reserva creada correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Reserva creada correctamente"
+                                        },
+                                        "reserva": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "recurso_id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "fecha_inicio": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-10 08:00:00"
+                                                },
+                                                "fecha_fin": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-10 10:00:00"
+                                                },
+                                                "estado": {
+                                                    "type": "string",
+                                                    "example": "activa"
+                                                },
+                                                "comentarios": {
+                                                    "type": "string",
+                                                    "example": "Reserva para clase de programación"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación, recurso no disponible o hay traslape con otra reserva"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reservas/{id}": {
+            "get": {
+                "tags": [
+                    "Reservas"
+                ],
+                "summary": "Ver detalles de una reserva",
+                "description": "Obtiene la información detallada de una reserva específica. Los usuarios normales solo pueden ver sus propias reservas.",
+                "operationId": "bf7ee1b118cec04e100edf1b5be0baa5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la reserva",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Información de la reserva",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "user_id": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "recurso_id": {
+                                            "type": "integer",
+                                            "example": 3
+                                        },
+                                        "fecha_inicio": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-12-10 08:00:00"
+                                        },
+                                        "fecha_fin": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2025-12-10 10:00:00"
+                                        },
+                                        "estado": {
+                                            "type": "string",
+                                            "example": "activa"
+                                        },
+                                        "comentarios": {
+                                            "type": "string",
+                                            "example": "Reserva para clase de programación"
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Juan Pérez"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "recurso": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "nombre": {
+                                                    "type": "string",
+                                                    "example": "Aula 101"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado para ver esta reserva"
+                    },
+                    "404": {
+                        "description": "Reserva no encontrada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Reservas"
+                ],
+                "summary": "Actualizar una reserva",
+                "description": "Actualiza una reserva existente. Los administradores pueden editar recurso, fechas, estado y comentarios. Los usuarios solo pueden editar fechas y comentarios de sus propias reservas activas.",
+                "operationId": "2264eabdd31de1bcc1ff36090d44304d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la reserva a actualizar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "recurso_id": {
+                                        "description": "Solo editable por admin",
+                                        "type": "integer",
+                                        "example": 4
+                                    },
+                                    "fecha_inicio": {
+                                        "description": "Para usuarios debe ser posterior a ahora",
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-12-10 09:00:00"
+                                    },
+                                    "fecha_fin": {
+                                        "description": "Debe ser posterior a fecha_inicio",
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-12-10 11:00:00"
+                                    },
+                                    "estado": {
+                                        "description": "Solo editable por admin",
+                                        "type": "string",
+                                        "enum": [
+                                            "activa",
+                                            "cancelada"
+                                        ],
+                                        "example": "activa"
+                                    },
+                                    "comentarios": {
+                                        "type": "string",
+                                        "maxLength": 500,
+                                        "example": "Comentarios actualizados"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reserva actualizada correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Reserva actualizada correctamente"
+                                        },
+                                        "reserva": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "recurso_id": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                },
+                                                "fecha_inicio": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-10 09:00:00"
+                                                },
+                                                "fecha_fin": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-10 11:00:00"
+                                                },
+                                                "estado": {
+                                                    "type": "string",
+                                                    "example": "activa"
+                                                },
+                                                "comentarios": {
+                                                    "type": "string",
+                                                    "example": "Comentarios actualizados"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado para editar esta reserva"
+                    },
+                    "404": {
+                        "description": "Reserva no encontrada"
+                    },
+                    "422": {
+                        "description": "Error de validación, campos no permitidos, reserva cancelada, o hay traslape"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reservas/{id}/cancelar": {
+            "post": {
+                "tags": [
+                    "Reservas"
+                ],
+                "summary": "Cancelar una reserva",
+                "description": "Cambia el estado de una reserva a 'cancelada'. Los usuarios pueden cancelar sus propias reservas y los administradores pueden cancelar cualquier reserva. Envía notificaciones y registra en el historial.",
+                "operationId": "e905d2d09a20534f6c3f921a30783021",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la reserva a cancelar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reserva cancelada correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Reserva cancelada correctamente"
+                                        },
+                                        "reserva": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "recurso_id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "fecha_inicio": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-10 08:00:00"
+                                                },
+                                                "fecha_fin": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2025-12-10 10:00:00"
+                                                },
+                                                "estado": {
+                                                    "type": "string",
+                                                    "example": "cancelada"
+                                                },
+                                                "comentarios": {
+                                                    "type": "string",
+                                                    "example": "Reserva para clase de programación"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado para cancelar esta reserva"
+                    },
+                    "404": {
+                        "description": "Reserva no encontrada"
+                    },
+                    "422": {
+                        "description": "La reserva ya está cancelada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/tipos-recurso": {
+            "get": {
+                "tags": [
+                    "Tipos de Recurso"
+                ],
+                "summary": "Listar tipos de recursos activos",
+                "description": "Obtiene la lista de todos los tipos de recursos con estado activo (cualquier usuario autenticado).",
+                "operationId": "91841b8a95c4c5971e0decdf8d244c31",
+                "responses": {
+                    "200": {
+                        "description": "Lista de tipos de recursos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "nombre": {
+                                                "type": "string",
+                                                "example": "Aula"
+                                            },
+                                            "descripcion": {
+                                                "type": "string",
+                                                "example": "Salas de clase para cursos"
+                                            },
+                                            "estado": {
+                                                "type": "integer",
+                                                "example": 1
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Tipos de Recurso"
+                ],
+                "summary": "Crear un nuevo tipo de recurso",
+                "description": "Crea un nuevo tipo de recurso en el sistema (solo administradores).",
+                "operationId": "689b1b4949a6d49372b72fb05fc46709",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "nombre"
+                                ],
+                                "properties": {
+                                    "nombre": {
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "example": "Auditorio"
+                                    },
+                                    "descripcion": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Espacios para eventos y conferencias"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tipo de recurso creado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "nombre": {
+                                            "type": "string",
+                                            "example": "Auditorio"
+                                        },
+                                        "descripcion": {
+                                            "type": "string",
+                                            "example": "Espacios para eventos y conferencias"
+                                        },
+                                        "estado": {
+                                            "type": "integer",
+                                            "example": 1
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "422": {
+                        "description": "Error de validación"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/tipos-recurso/{id}": {
+            "get": {
+                "tags": [
+                    "Tipos de Recurso"
+                ],
+                "summary": "Ver detalles de un tipo de recurso",
+                "description": "Obtiene la información de un tipo de recurso específico (cualquier usuario autenticado).",
+                "operationId": "271d0b3e574c8878bffe72ab70e7b578",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del tipo de recurso",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Información del tipo de recurso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "nombre": {
+                                            "type": "string",
+                                            "example": "Laboratorio"
+                                        },
+                                        "descripcion": {
+                                            "type": "string",
+                                            "example": "Laboratorios de computación"
+                                        },
+                                        "estado": {
+                                            "type": "integer",
+                                            "example": 1
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Tipo de recurso no encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Tipos de Recurso"
+                ],
+                "summary": "Actualizar un tipo de recurso",
+                "description": "Actualiza un tipo de recurso (solo administradores). Si tiene recursos asociados, solo permite actualizar el nombre.",
+                "operationId": "beabba3976994b7634dd5903e922fdb5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del tipo de recurso a actualizar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "nombre": {
+                                        "type": "string",
+                                        "maxLength": 50,
+                                        "example": "Aula Actualizada"
+                                    },
+                                    "descripcion": {
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Nueva descripción"
+                                    },
+                                    "estado": {
+                                        "description": "0=inactivo, 1=activo, 2=eliminado (solo si no tiene recursos asociados)",
+                                        "type": "integer",
+                                        "enum": [
+                                            0,
+                                            1,
+                                            2
+                                        ],
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tipo de recurso actualizado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tipo de recurso actualizado correctamente"
+                                        },
+                                        "tipo": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "nombre": {
+                                                    "type": "string",
+                                                    "example": "Aula Actualizada"
+                                                },
+                                                "descripcion": {
+                                                    "type": "string",
+                                                    "example": "Nueva descripción"
+                                                },
+                                                "estado": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "404": {
+                        "description": "Tipo de recurso no encontrado"
+                    },
+                    "422": {
+                        "description": "Error de validación o intento de editar campos no permitidos cuando tiene recursos asociados"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Tipos de Recurso"
+                ],
+                "summary": "Eliminar un tipo de recurso",
+                "description": "Elimina lógicamente un tipo de recurso (cambia su estado a 2) solo si no tiene recursos asociados (solo administradores).",
+                "operationId": "1b9b29d4f99dbaa624ed1db9a63ae11e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del tipo de recurso a eliminar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tipo de recurso eliminado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tipo de recurso eliminado correctamente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "404": {
+                        "description": "Tipo de recurso no encontrado"
+                    },
+                    "422": {
+                        "description": "No se puede eliminar porque tiene recursos asociados"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/usuarios": {
+            "get": {
+                "tags": [
+                    "Usuarios"
+                ],
+                "summary": "Listar todos los usuarios",
+                "description": "Obtiene la lista de usuarios (solo administradores). Permite filtrar por estado y rol.",
+                "operationId": "a48f811f67f75563295fd522a7d8b8aa",
+                "parameters": [
+                    {
+                        "name": "estado",
+                        "in": "query",
+                        "description": "Filtrar por estado (0=inactivo, 1=activo)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
+                    },
+                    {
+                        "name": "role_id",
+                        "in": "query",
+                        "description": "Filtrar por ID del rol",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de usuarios",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Juan Pérez"
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "example": "juan@universidad.edu"
+                                            },
+                                            "role_id": {
+                                                "type": "integer",
+                                                "example": 2
+                                            },
+                                            "estado": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "must_change_password": {
+                                                "type": "boolean",
+                                                "example": false
+                                            },
+                                            "role": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "nombre": {
+                                                        "type": "string",
+                                                        "example": "usuario"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Usuarios"
+                ],
+                "summary": "Crear un nuevo usuario",
+                "description": "Crea un nuevo usuario en el sistema (solo administradores). El usuario creado deberá cambiar su contraseña en el primer ingreso.",
+                "operationId": "9feb335faa965a7d5956023a1c641886",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "password",
+                                    "role_id"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "María García"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "maria@universidad.edu"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "minLength": 6,
+                                        "example": "secreto123"
+                                    },
+                                    "role_id": {
+                                        "description": "ID del rol (debe existir en la tabla roles)",
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Usuario creado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario creado correctamente. Debe cambiar su contraseña al primer ingreso."
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "María García"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "maria@universidad.edu"
+                                                },
+                                                "role_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "estado": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "must_change_password": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "422": {
+                        "description": "Error de validación"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/usuarios/{id}": {
+            "get": {
+                "tags": [
+                    "Usuarios"
+                ],
+                "summary": "Ver detalles de un usuario",
+                "description": "Obtiene la información completa de un usuario específico (solo administradores).",
+                "operationId": "89edf985bce0cfcce1efae37038954f4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del usuario",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Información del usuario",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Juan Pérez"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "example": "juan@universidad.edu"
+                                        },
+                                        "role_id": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "estado": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "must_change_password": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "role": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "nombre": {
+                                                    "type": "string",
+                                                    "example": "usuario"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Usuarios"
+                ],
+                "summary": "Actualizar un usuario",
+                "description": "Actualiza la información de un usuario (solo administradores). No puede desactivar su propio usuario.",
+                "operationId": "2861aa573a657fda23bd19f673925aa1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del usuario a actualizar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Juan Pérez Actualizado"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "juan.nuevo@universidad.edu"
+                                    },
+                                    "role_id": {
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "estado": {
+                                        "description": "0=inactivo, 1=activo",
+                                        "type": "integer",
+                                        "enum": [
+                                            0,
+                                            1
+                                        ],
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Usuario actualizado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario actualizado correctamente"
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Juan Pérez Actualizado"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "juan.nuevo@universidad.edu"
+                                                },
+                                                "role_id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "estado": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado"
+                    },
+                    "422": {
+                        "description": "Error de validación o intento de desactivar su propio usuario"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Usuarios"
+                ],
+                "summary": "Desactivar un usuario",
+                "description": "Desactiva un usuario (cambia su estado a 0) en lugar de eliminarlo físicamente (solo administradores). No puede desactivar su propio usuario.",
+                "operationId": "e4ae2801dc6f71568a5190443d6875e3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del usuario a desactivar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Usuario desactivado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Usuario desactivado correctamente"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado"
+                    },
+                    "422": {
+                        "description": "Intento de desactivar su propio usuario"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/usuarios/perfil": {
+            "put": {
+                "tags": [
+                    "Usuarios"
+                ],
+                "summary": "Actualizar perfil del usuario autenticado",
+                "description": "Permite al usuario autenticado actualizar su nombre y correo electrónico. No se puede modificar el rol ni el estado.",
+                "operationId": "f7b7bc778249042714eb5a1bcde35813",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "maxLength": 100,
+                                        "example": "Mi Nuevo Nombre"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "mi.nuevo.email@universidad.edu"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Perfil actualizado correctamente",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Perfil actualizado correctamente"
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Mi Nuevo Nombre"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "mi.nuevo.email@universidad.edu"
+                                                },
+                                                "role_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "estado": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación o campos no permitidos"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "description": "Introduce el token JWT con el formato: Bearer {token}",
+                "bearerFormat": "JWT",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Historial de Reservas",
+            "description": "Consulta del historial de cambios de las reservas"
+        },
+        {
+            "name": "Notificaciones",
+            "description": "Gestión de notificaciones del usuario autenticado"
+        },
+        {
+            "name": "Recursos",
+            "description": "Gestión de recursos físicos (aulas, laboratorios, equipos, etc.)"
+        },
+        {
+            "name": "Reservas",
+            "description": "Gestión de reservas de recursos"
+        },
+        {
+            "name": "Tipos de Recurso",
+            "description": "Gestión de tipos de recursos (aulas, laboratorios, equipos, etc.)"
+        },
+        {
+            "name": "Usuarios",
+            "description": "Gestión de usuarios del sistema"
+        },
+        {
+            "name": "Autenticación",
+            "description": "Autenticación"
+        }
+    ]
+}
