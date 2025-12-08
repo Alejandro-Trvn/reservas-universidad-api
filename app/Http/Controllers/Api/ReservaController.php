@@ -32,7 +32,7 @@ class ReservaController extends Controller
 
     private function ensureIsAdmin(): void
     {
-        if (! $this->isAdmin()) {
+        if (!$this->isAdmin()) {
             abort(response()->json([
                 'message' => 'No autorizado. Solo un administrador puede realizar esta acción.'
             ], 403));
@@ -44,8 +44,8 @@ class ReservaController extends Controller
         foreach ($userIds as $userId) {
             Notificacion::create([
                 'user_id' => $userId,
-                'tipo'    => $tipo,
-                'titulo'  => $titulo,
+                'tipo' => $tipo,
+                'titulo' => $titulo,
                 'mensaje' => $mensaje,
             ]);
         }
@@ -64,9 +64,9 @@ class ReservaController extends Controller
     {
         HistorialReserva::create([
             'reserva_id' => $reserva->id,
-            'user_id'    => $actorUserId,
-            'accion'     => $accion,
-            'detalle'    => $detalle,
+            'user_id' => $actorUserId,
+            'accion' => $accion,
+            'detalle' => $detalle,
         ]);
     }
 
@@ -142,7 +142,7 @@ class ReservaController extends Controller
      */
     public function index(Request $request)
     {
-        $user    = $this->currentUser();
+        $user = $this->currentUser();
         $esAdmin = $this->isAdmin();
 
         if ($esAdmin) {
@@ -227,16 +227,16 @@ class ReservaController extends Controller
      */
     public function show($id)
     {
-        $user    = $this->currentUser();
+        $user = $this->currentUser();
         $esAdmin = $this->isAdmin();
 
         $reserva = Reserva::with(['user', 'recurso'])->find($id);
 
-        if (! $reserva) {
+        if (!$reserva) {
             return response()->json(['message' => 'Reserva no encontrada'], 404);
         }
 
-        if (! $esAdmin && $reserva->user_id !== $user->id) {
+        if (!$esAdmin && $reserva->user_id !== $user->id) {
             return response()->json(['message' => 'No autorizado para ver esta reserva'], 403);
         }
 
@@ -288,10 +288,10 @@ class ReservaController extends Controller
         $user = $this->currentUser();
 
         $data = $request->validate([
-            'recurso_id'    => 'required|exists:recursos,id',
-            'fecha_inicio'  => 'required|date_format:Y-m-d H:i:s|after:now',
-            'fecha_fin'     => 'required|date_format:Y-m-d H:i:s|after:fecha_inicio',
-            'comentarios'   => 'nullable|string|max:500',
+            'recurso_id' => 'required|exists:recursos,id',
+            'fecha_inicio' => 'required|date_format:Y-m-d H:i:s|after:now',
+            'fecha_fin' => 'required|date_format:Y-m-d H:i:s|after:fecha_inicio',
+            'comentarios' => 'nullable|string|max:500',
         ]);
 
         $recurso = Recurso::where('id', $data['recurso_id'])
@@ -299,14 +299,14 @@ class ReservaController extends Controller
             ->where('disponibilidad_general', true)
             ->first();
 
-        if (! $recurso) {
+        if (!$recurso) {
             return response()->json([
                 'message' => 'El recurso no está disponible para reservas (inactivo o no disponible).'
             ], 422);
         }
 
         $inicio = $data['fecha_inicio'];
-        $fin    = $data['fecha_fin'];
+        $fin = $data['fecha_fin'];
 
         $hayTraslape = Reserva::where('recurso_id', $data['recurso_id'])
             ->where('estado', 'activa')
@@ -323,12 +323,12 @@ class ReservaController extends Controller
         }
 
         $reserva = Reserva::create([
-            'user_id'      => $user->id,
-            'recurso_id'   => $data['recurso_id'],
+            'user_id' => $user->id,
+            'recurso_id' => $data['recurso_id'],
             'fecha_inicio' => $inicio,
-            'fecha_fin'    => $fin,
-            'estado'       => 'activa',
-            'comentarios'  => $data['comentarios'] ?? null,
+            'fecha_fin' => $fin,
+            'estado' => 'activa',
+            'comentarios' => $data['comentarios'] ?? null,
         ]);
 
         // Notificación para el usuario (confirmación)
@@ -422,25 +422,25 @@ class ReservaController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $user    = $this->currentUser();
+        $user = $this->currentUser();
         $esAdmin = $this->isAdmin();
 
         $reserva = Reserva::find($id);
 
-        if (! $reserva) {
+        if (!$reserva) {
             return response()->json(['message' => 'Reserva no encontrada'], 404);
         }
 
         $esDueno = $reserva->user_id === $user->id;
 
-        if (! $esAdmin && ! $esDueno) {
+        if (!$esAdmin && !$esDueno) {
             return response()->json(['message' => 'No autorizado para editar esta reserva'], 403);
         }
 
         // Nunca se puede cambiar user_id
         if ($request->has('user_id')) {
             return response()->json([
-                'message'        => 'No puede cambiar el usuario de una reserva existente.',
+                'message' => 'No puede cambiar el usuario de una reserva existente.',
                 'invalid_fields' => ['user_id'],
             ], 422);
         }
@@ -449,29 +449,29 @@ class ReservaController extends Controller
         if ($esAdmin) {
             $allowedFields = ['recurso_id', 'fecha_inicio', 'fecha_fin', 'estado', 'comentarios'];
 
-            $inputKeys   = array_keys($request->all());
+            $inputKeys = array_keys($request->all());
             $extraFields = array_diff($inputKeys, $allowedFields);
 
             if (!empty($extraFields)) {
                 return response()->json([
-                    'message'        => 'Solo puede actualizar recurso, fechas, estado y comentarios.',
+                    'message' => 'Solo puede actualizar recurso, fechas, estado y comentarios.',
                     'invalid_fields' => array_values($extraFields),
                 ], 422);
             }
 
             $data = $request->validate([
-                'recurso_id'   => 'sometimes|required|exists:recursos,id',
+                'recurso_id' => 'sometimes|required|exists:recursos,id',
                 'fecha_inicio' => 'sometimes|required|date_format:Y-m-d H:i:s',
-                'fecha_fin'    => 'sometimes|required|date_format:Y-m-d H:i:s|after:fecha_inicio',
-                'estado'       => 'sometimes|required|in:activa,cancelada',
-                'comentarios'  => 'nullable|string|max:500',
+                'fecha_fin' => 'sometimes|required|date_format:Y-m-d H:i:s|after:fecha_inicio',
+                'estado' => 'sometimes|required|in:activa,cancelada',
+                'comentarios' => 'nullable|string|max:500',
             ]);
 
-            $nuevoRecursoId   = $data['recurso_id']   ?? $reserva->recurso_id;
-            $nuevoInicio      = $data['fecha_inicio'] ?? $reserva->fecha_inicio;
-            $nuevoFin         = $data['fecha_fin']    ?? $reserva->fecha_fin;
-            $nuevoEstado      = $data['estado']       ?? $reserva->estado;
-            $nuevoComentarios = $data['comentarios']  ?? $reserva->comentarios;
+            $nuevoRecursoId = $data['recurso_id'] ?? $reserva->recurso_id;
+            $nuevoInicio = $data['fecha_inicio'] ?? $reserva->fecha_inicio;
+            $nuevoFin = $data['fecha_fin'] ?? $reserva->fecha_fin;
+            $nuevoEstado = $data['estado'] ?? $reserva->estado;
+            $nuevoComentarios = $data['comentarios'] ?? $reserva->comentarios;
 
             if ($nuevoEstado === 'activa') {
                 $recurso = Recurso::where('id', $nuevoRecursoId)
@@ -479,7 +479,7 @@ class ReservaController extends Controller
                     ->where('disponibilidad_general', true)
                     ->first();
 
-                if (! $recurso) {
+                if (!$recurso) {
                     return response()->json([
                         'message' => 'El recurso no está disponible para reservas (inactivo o no disponible).'
                     ], 422);
@@ -501,11 +501,11 @@ class ReservaController extends Controller
                 }
             }
 
-            $reserva->recurso_id   = $nuevoRecursoId;
+            $reserva->recurso_id = $nuevoRecursoId;
             $reserva->fecha_inicio = $nuevoInicio;
-            $reserva->fecha_fin    = $nuevoFin;
-            $reserva->estado       = $nuevoEstado;
-            $reserva->comentarios  = $nuevoComentarios;
+            $reserva->fecha_fin = $nuevoFin;
+            $reserva->estado = $nuevoEstado;
+            $reserva->comentarios = $nuevoComentarios;
             $reserva->save();
 
             // Historial: actualización por admin
@@ -541,24 +541,24 @@ class ReservaController extends Controller
 
         $allowedFields = ['fecha_inicio', 'fecha_fin', 'comentarios'];
 
-        $inputKeys   = array_keys($request->all());
+        $inputKeys = array_keys($request->all());
         $extraFields = array_diff($inputKeys, $allowedFields);
 
         if (!empty($extraFields)) {
             return response()->json([
-                'message'        => 'Solo puede actualizar fecha de inicio, fecha de fin y comentarios.',
+                'message' => 'Solo puede actualizar fecha de inicio, fecha de fin y comentarios.',
                 'invalid_fields' => array_values($extraFields),
             ], 422);
         }
 
         $data = $request->validate([
             'fecha_inicio' => 'required|date_format:Y-m-d H:i:s|after:now',
-            'fecha_fin'    => 'required|date_format:Y-m-d H:i:s|after:fecha_inicio',
-            'comentarios'  => 'nullable|string|max:500',
+            'fecha_fin' => 'required|date_format:Y-m-d H:i:s|after:fecha_inicio',
+            'comentarios' => 'nullable|string|max:500',
         ]);
 
-        $nuevoInicio      = $data['fecha_inicio'];
-        $nuevoFin         = $data['fecha_fin'];
+        $nuevoInicio = $data['fecha_inicio'];
+        $nuevoFin = $data['fecha_fin'];
         $nuevoComentarios = $data['comentarios'] ?? $reserva->comentarios;
 
         $recurso = Recurso::where('id', $reserva->recurso_id)
@@ -566,7 +566,7 @@ class ReservaController extends Controller
             ->where('disponibilidad_general', true)
             ->first();
 
-        if (! $recurso) {
+        if (!$recurso) {
             return response()->json([
                 'message' => 'El recurso ya no está disponible para reservas (inactivo o no disponible).'
             ], 422);
@@ -588,8 +588,8 @@ class ReservaController extends Controller
         }
 
         $reserva->fecha_inicio = $nuevoInicio;
-        $reserva->fecha_fin    = $nuevoFin;
-        $reserva->comentarios  = $nuevoComentarios;
+        $reserva->fecha_fin = $nuevoFin;
+        $reserva->comentarios = $nuevoComentarios;
         $reserva->save();
 
         // Historial: actualización por usuario
@@ -673,18 +673,18 @@ class ReservaController extends Controller
      */
     public function cancel($id)
     {
-        $user    = $this->currentUser();
+        $user = $this->currentUser();
         $esAdmin = $this->isAdmin();
 
         $reserva = Reserva::find($id);
 
-        if (! $reserva) {
+        if (!$reserva) {
             return response()->json(['message' => 'Reserva no encontrada'], 404);
         }
 
         $esDueno = $reserva->user_id === $user->id;
 
-        if (! $esAdmin && ! $esDueno) {
+        if (!$esAdmin && !$esDueno) {
             return response()->json(['message' => 'No autorizado para cancelar esta reserva'], 403);
         }
 
@@ -696,14 +696,14 @@ class ReservaController extends Controller
         $reserva->save();
 
         // Historial: cancelación
-        if ($esAdmin && ! $esDueno) {
+        if ($esAdmin && !$esDueno) {
             $this->logHistorial(
                 $reserva,
                 $user->id,
                 'cancelada_admin',
                 "Reserva cancelada por el administrador {$user->name}."
             );
-        } elseif (! $esAdmin && $esDueno) {
+        } elseif (!$esAdmin && $esDueno) {
             $this->logHistorial(
                 $reserva,
                 $user->id,
@@ -714,7 +714,7 @@ class ReservaController extends Controller
 
 
         // Notificaciones según quién cancela
-        if ($esAdmin && ! $esDueno) {
+        if ($esAdmin && !$esDueno) {
             // Admin cancela la reserva de otro usuario
             $this->enviarNotificaciones(
                 [$reserva->user_id],
@@ -722,7 +722,7 @@ class ReservaController extends Controller
                 'Tu reserva ha sido cancelada por un administrador',
                 "Tu reserva del recurso {$reserva->recurso->nombre} ha sido cancelada por un administrador."
             );
-        } elseif (! $esAdmin && $esDueno) {
+        } elseif (!$esAdmin && $esDueno) {
             // Usuario cancela su propia reserva -> avisar admins
             $adminIds = $this->obtenerAdminsIds();
             if (!empty($adminIds)) {
@@ -740,4 +740,319 @@ class ReservaController extends Controller
             'reserva' => $reserva,
         ]);
     }
+
+    // ============= VERIFICAR CONFLICTOS =============
+    /**
+     * @OA\Post(
+     *     path="/api/reservas/verificar-conflictos",
+     *     tags={"Reservas"},
+     *     summary="Verificar conflictos de reserva",
+     *     description="Verifica si hay conflictos de reserva para un recurso en un rango de fechas específico",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"recurso_id", "fecha_inicio", "fecha_fin"},
+     *             @OA\Property(property="recurso_id", type="integer", example=3, description="ID del recurso a verificar"),
+     *             @OA\Property(property="fecha_inicio", type="string", format="date-time", example="2024-12-10 08:00:00"),
+     *             @OA\Property(property="fecha_fin", type="string", format="date-time", example="2024-12-10 10:00:00"),
+     *             @OA\Property(property="reserva_id_excluir", type="integer", example=5, description="ID de reserva a excluir de la búsqueda (opcional)")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Resultado de la verificación de conflictos",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="hay_conflicto", type="boolean", example=true),
+     *             @OA\Property(property="conflictos", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=5),
+     *                     @OA\Property(property="fecha_inicio", type="string", example="2024-12-10 08:00:00"),
+     *                     @OA\Property(property="fecha_fin", type="string", example="2024-12-10 10:00:00"),
+     *                     @OA\Property(property="usuario", type="string", example="Juan Pérez"),
+     *                     @OA\Property(property="recurso", type="string", example="Aula 101")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=422, description="Error de validación")
+     * )
+     */
+    public function verificarConflictos(Request $request)
+    {
+        $data = $request->validate([
+            'recurso_id' => 'required|exists:recursos,id',
+            'fecha_inicio' => 'required|date_format:Y-m-d H:i:s',
+            'fecha_fin' => 'required|date_format:Y-m-d H:i:s|after:fecha_inicio',
+            'reserva_id_excluir' => 'nullable|integer|exists:reservas,id',
+        ]);
+
+        $query = Reserva::with(['user', 'recurso'])
+            ->where('recurso_id', $data['recurso_id'])
+            ->where('estado', 'activa')
+            ->where(function ($q) use ($data) {
+                $q->where('fecha_inicio', '<', $data['fecha_fin'])
+                    ->where('fecha_fin', '>', $data['fecha_inicio']);
+            });
+
+        if (isset($data['reserva_id_excluir'])) {
+            $query->where('id', '!=', $data['reserva_id_excluir']);
+        }
+
+        $conflictos = $query->get();
+
+        return response()->json([
+            'hay_conflicto' => $conflictos->isNotEmpty(),
+            'mensaje' => $conflictos->isEmpty()
+                ? 'No hay conflictos. El recurso está disponible en el rango seleccionado.'
+                : 'Hay reservas que se traslapan con el rango seleccionado.',
+            'conflictos' => $conflictos->map(function ($reserva) {
+                return [
+                    'id' => $reserva->id,
+                    'fecha_inicio' => $reserva->fecha_inicio,
+                    'fecha_fin' => $reserva->fecha_fin,
+                    'usuario' => $reserva->user->name ?? 'N/A',
+                    'recurso' => $reserva->recurso->nombre ?? 'N/A',
+                ];
+            }),
+        ]);
+    }
+
+    // ============= RESERVAS POR USUARIO =============
+    /**
+     * @OA\Get(
+     *     path="/api/reservas/reportes/por-usuario/{userId}",
+     *     tags={"Reservas"},
+     *     summary="Reporte de reservas por usuario",
+     *     description="Obtiene todas las reservas de un usuario específico con filtros opcionales de fecha y estado",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="userId",
+     *         in="path",
+     *         description="ID del usuario",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="estado",
+     *         in="query",
+     *         description="Filtrar por estado de la reserva",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"activa", "cancelada"})
+     *     ),
+     *     @OA\Parameter(
+     *         name="fecha_desde",
+     *         in="query",
+     *         description="Fecha de inicio del periodo",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="fecha_hasta",
+     *         in="query",
+     *         description="Fecha de fin del periodo",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Reporte de reservas del usuario",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="usuario", type="object",
+     *                 @OA\Property(property="id", type="integer", example=5),
+     *                 @OA\Property(property="name", type="string", example="Juan Pérez"),
+     *                 @OA\Property(property="email", type="string", example="juan@example.com")
+     *             ),
+     *             @OA\Property(property="total_reservas", type="integer", example=15),
+     *             @OA\Property(property="reservas_activas", type="integer", example=8),
+     *             @OA\Property(property="reservas_canceladas", type="integer", example=7),
+     *             @OA\Property(property="reservas", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="recurso", type="string", example="Aula 101"),
+     *                     @OA\Property(property="fecha_inicio", type="string", example="2024-12-10 08:00:00"),
+     *                     @OA\Property(property="fecha_fin", type="string", example="2024-12-10 10:00:00"),
+     *                     @OA\Property(property="estado", type="string", example="activa")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(response=404, description="Usuario no encontrado")
+     * )
+     */
+    public function reservasPorUsuario(Request $request, $userId)
+    {
+        $usuario = User::find($userId);
+
+        if (!$usuario) {
+            return response()->json(['message' => 'Usuario no encontrado'], 404);
+        }
+
+        $query = Reserva::with('recurso')
+            ->where('user_id', $userId);
+
+        // Filtros opcionales
+        if ($request->has('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        if ($request->has('fecha_desde')) {
+            $query->where('fecha_inicio', '>=', $request->fecha_desde);
+        }
+
+        if ($request->has('fecha_hasta')) {
+            $query->where('fecha_fin', '<=', $request->fecha_hasta);
+        }
+
+        $reservas = $query->orderBy('fecha_inicio', 'desc')->get();
+
+        $totalReservas = $reservas->count();
+        $reservasActivas = $reservas->where('estado', 'activa')->count();
+        $reservasCanceladas = $reservas->where('estado', 'cancelada')->count();
+
+        return response()->json([
+            'usuario' => [
+                'id' => $usuario->id,
+                'name' => $usuario->name,
+                'email' => $usuario->email,
+            ],
+            'total_reservas' => $totalReservas,
+            'reservas_activas' => $reservasActivas,
+            'reservas_canceladas' => $reservasCanceladas,
+            'reservas' => $reservas->map(function ($reserva) {
+                return [
+                    'id' => $reserva->id,
+                    'recurso' => $reserva->recurso->nombre ?? 'N/A',
+                    'fecha_inicio' => $reserva->fecha_inicio,
+                    'fecha_fin' => $reserva->fecha_fin,
+                    'estado' => $reserva->estado,
+                    'comentarios' => $reserva->comentarios,
+                ];
+            }),
+        ]);
+    }
+
+    // ============= ESTADÍSTICAS DE USO =============
+    /**
+     * @OA\Get(
+     *     path="/api/reservas/reportes/estadisticas",
+     *     tags={"Reservas"},
+     *     summary="Estadísticas de uso del sistema",
+     *     description="Obtiene estadísticas generales del sistema de reservas, incluyendo totales, promedios y distribución por estado",
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="fecha_desde",
+     *         in="query",
+     *         description="Fecha de inicio del periodo de análisis",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="fecha_hasta",
+     *         in="query",
+     *         description="Fecha de fin del periodo de análisis",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Estadísticas del sistema",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="periodo", type="object",
+     *                 @OA\Property(property="desde", type="string", example="2024-01-01"),
+     *                 @OA\Property(property="hasta", type="string", example="2024-12-31")
+     *             ),
+     *             @OA\Property(property="totales", type="object",
+     *                 @OA\Property(property="total_reservas", type="integer", example=150),
+     *                 @OA\Property(property="reservas_activas", type="integer", example=85),
+     *                 @OA\Property(property="reservas_canceladas", type="integer", example=65)
+     *             ),
+     *             @OA\Property(property="promedios", type="object",
+     *                 @OA\Property(property="reservas_por_usuario", type="number", format="float", example=5.2),
+     *                 @OA\Property(property="reservas_por_recurso", type="number", format="float", example=7.5)
+     *             ),
+     *             @OA\Property(property="top_usuarios", type="array",
+     *                 @OA\Items(
+     *                     @OA\Property(property="usuario", type="string", example="Juan Pérez"),
+     *                     @OA\Property(property="total_reservas", type="integer", example=12)
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function estadisticasUso(Request $request)
+    {
+        $query = Reserva::query();
+
+        $fechaDesde = $request->get('fecha_desde');
+        $fechaHasta = $request->get('fecha_hasta');
+
+        if ($fechaDesde) {
+            $query->where('fecha_inicio', '>=', $fechaDesde);
+        }
+
+        if ($fechaHasta) {
+            $query->where('fecha_fin', '<=', $fechaHasta);
+        }
+
+        $reservas = $query->get();
+
+        $totalReservas = $reservas->count();
+        $reservasActivas = $reservas->where('estado', 'activa')->count();
+        $reservasCanceladas = $reservas->where('estado', 'cancelada')->count();
+
+        // Usuarios con más reservas
+        $topUsuarios = Reserva::with('user')
+            ->selectRaw('user_id, COUNT(*) as total')
+            ->groupBy('user_id')
+            ->orderBy('total', 'desc')
+            ->limit(5)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'usuario' => $item->user->name ?? 'N/A',
+                    'total_reservas' => $item->total,
+                ];
+            });
+
+        // Estadísticas por tipo de recurso
+        $reservasPorTipoRecurso = Reserva::with('recurso.tipoRecurso')
+            ->get()
+            ->groupBy('recurso.tipo_recurso_id')
+            ->map(function ($reservas, $tipoId) {
+                $primerReserva = $reservas->first();
+                return [
+                    'tipo' => $primerReserva->recurso->tipoRecurso->nombre ?? 'N/A',
+                    'total_reservas' => $reservas->count(),
+                ];
+            })
+            ->values();
+
+        // Promedios
+        $totalUsuarios = User::count();
+        $totalRecursos = Recurso::where('estado', 1)->count();
+
+        $promedioReservasPorUsuario = $totalUsuarios > 0 ? round($totalReservas / $totalUsuarios, 2) : 0;
+        $promedioReservasPorRecurso = $totalRecursos > 0 ? round($totalReservas / $totalRecursos, 2) : 0;
+
+        return response()->json([
+            'periodo' => [
+                'desde' => $fechaDesde ?? 'Todos los tiempos',
+                'hasta' => $fechaHasta ?? 'Presente',
+            ],
+            'totales' => [
+                'total_reservas' => $totalReservas,
+                'reservas_activas' => $reservasActivas,
+                'reservas_canceladas' => $reservasCanceladas,
+            ],
+            'promedios' => [
+                'reservas_por_usuario' => $promedioReservasPorUsuario,
+                'reservas_por_recurso' => $promedioReservasPorRecurso,
+            ],
+            'top_usuarios' => $topUsuarios,
+            'reservas_por_tipo_recurso' => $reservasPorTipoRecurso,
+        ]);
+    }
 }
+

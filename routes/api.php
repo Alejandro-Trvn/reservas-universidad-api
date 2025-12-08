@@ -60,8 +60,15 @@ Route::middleware('auth:api')->group(function () {
 
     // ============= RECURSOS ================
     Route::prefix('recursos')->group(function () {
+        // Disponibilidad y búsqueda avanzada (PRIMERO: rutas específicas)
+        Route::get('/busqueda-avanzada', [RecursoController::class, 'busquedaAvanzada']);
+        Route::get('/reportes/mas-utilizados', [RecursoController::class, 'recursosMasUtilizados']);
+        Route::get('/tipo/{tipoId}/disponibles', [RecursoController::class, 'recursosPorTipoDisponibles']);
+
+        // CRUD básico (DESPUÉS: rutas genéricas con {id})
         Route::get('/', [RecursoController::class, 'index']);
         Route::get('/{id}', [RecursoController::class, 'show']);
+        Route::get('/{id}/disponibilidad', [RecursoController::class, 'verificarDisponibilidad']);
         Route::post('/', [RecursoController::class, 'store']);      // solo admin
         Route::put('/{id}', [RecursoController::class, 'update']);  // solo admin
         Route::delete('/{id}', [RecursoController::class, 'destroy']); // solo admin
@@ -69,6 +76,12 @@ Route::middleware('auth:api')->group(function () {
 
     // ============= RESERVAS ================
     Route::prefix('reservas')->group(function () {
+        // Validaciones y reportes (PRIMERO: rutas específicas)
+        Route::post('/verificar-conflictos', [ReservaController::class, 'verificarConflictos']);
+        Route::get('/reportes/por-usuario/{userId}', [ReservaController::class, 'reservasPorUsuario']);
+        Route::get('/reportes/estadisticas', [ReservaController::class, 'estadisticasUso']);
+
+        // CRUD básico (DESPUÉS: rutas genéricas con {id})
         Route::get('/', [ReservaController::class, 'index']);
         Route::get('/{id}', [ReservaController::class, 'show']);
         Route::post('/', [ReservaController::class, 'store']);

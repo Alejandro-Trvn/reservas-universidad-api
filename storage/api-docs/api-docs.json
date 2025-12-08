@@ -1028,6 +1028,383 @@
                 ]
             }
         },
+        "/api/recursos/{id}/disponibilidad": {
+            "get": {
+                "tags": [
+                    "Recursos"
+                ],
+                "summary": "Verificar disponibilidad de un recurso en un rango de fechas",
+                "description": "Verifica si un recurso está disponible en un rango específico de fechas, mostrando las reservas existentes en ese periodo",
+                "operationId": "4f9d6920fa4f23ebbbcda2b572a2c41d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del recurso",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "fecha_inicio",
+                        "in": "query",
+                        "description": "Fecha y hora de inicio (formato: Y-m-d H:i:s)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2024-12-10 08:00:00"
+                        }
+                    },
+                    {
+                        "name": "fecha_fin",
+                        "in": "query",
+                        "description": "Fecha y hora de fin (formato: Y-m-d H:i:s)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2024-12-10 10:00:00"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Información de disponibilidad del recurso",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "recurso_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "recurso_nombre": {
+                                            "type": "string",
+                                            "example": "Aula 101"
+                                        },
+                                        "disponible": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "reservas_existentes": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "fecha_inicio": {
+                                                        "type": "string",
+                                                        "example": "2024-12-10 08:00:00"
+                                                    },
+                                                    "fecha_fin": {
+                                                        "type": "string",
+                                                        "example": "2024-12-10 10:00:00"
+                                                    },
+                                                    "usuario": {
+                                                        "type": "string",
+                                                        "example": "Juan Pérez"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Recurso no encontrado"
+                    },
+                    "422": {
+                        "description": "Error de validación"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recursos/tipo/{tipoId}/disponibles": {
+            "get": {
+                "tags": [
+                    "Recursos"
+                ],
+                "summary": "Listar recursos disponibles por tipo en un rango de fechas",
+                "description": "Obtiene todos los recursos de un tipo específico que están disponibles en un rango de fechas",
+                "operationId": "0d9fe6bda94d7d202413badb0584b7e9",
+                "parameters": [
+                    {
+                        "name": "tipoId",
+                        "in": "path",
+                        "description": "ID del tipo de recurso",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "fecha_inicio",
+                        "in": "query",
+                        "description": "Fecha y hora de inicio (formato: Y-m-d H:i:s)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2024-12-10 08:00:00"
+                        }
+                    },
+                    {
+                        "name": "fecha_fin",
+                        "in": "query",
+                        "description": "Fecha y hora de fin (formato: Y-m-d H:i:s)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2024-12-10 10:00:00"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de recursos disponibles",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "nombre": {
+                                                "type": "string",
+                                                "example": "Aula 101"
+                                            },
+                                            "capacidad": {
+                                                "type": "integer",
+                                                "example": 30
+                                            },
+                                            "ubicacion": {
+                                                "type": "string",
+                                                "example": "Edificio A"
+                                            },
+                                            "disponible": {
+                                                "type": "boolean",
+                                                "example": true
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recursos/busqueda-avanzada": {
+            "get": {
+                "tags": [
+                    "Recursos"
+                ],
+                "summary": "Búsqueda avanzada de recursos",
+                "description": "Busca recursos por múltiples criterios: capacidad, ubicación y tipo",
+                "operationId": "87be93977c1d2ba11757f9866c65ce25",
+                "parameters": [
+                    {
+                        "name": "tipo_recurso_id",
+                        "in": "query",
+                        "description": "ID del tipo de recurso",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "capacidad_min",
+                        "in": "query",
+                        "description": "Capacidad mínima requerida",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "ubicacion",
+                        "in": "query",
+                        "description": "Búsqueda parcial en ubicación (ejemplo: 'Edificio A')",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "nombre",
+                        "in": "query",
+                        "description": "Búsqueda parcial en nombre del recurso",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recursos que coinciden con los criterios de búsqueda",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "nombre": {
+                                                "type": "string",
+                                                "example": "Aula 101"
+                                            },
+                                            "capacidad": {
+                                                "type": "integer",
+                                                "example": 30
+                                            },
+                                            "ubicacion": {
+                                                "type": "string",
+                                                "example": "Edificio A, Piso 1"
+                                            },
+                                            "tipo_recurso": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "nombre": {
+                                                        "type": "string",
+                                                        "example": "Aula"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recursos/reportes/mas-utilizados": {
+            "get": {
+                "tags": [
+                    "Recursos"
+                ],
+                "summary": "Reporte de recursos más utilizados",
+                "description": "Obtiene los recursos más utilizados basándose en el número de reservas",
+                "operationId": "d711346b75f98b3ce9fcffd2fff65e1b",
+                "parameters": [
+                    {
+                        "name": "limite",
+                        "in": "query",
+                        "description": "Número máximo de recursos a retornar (por defecto 10)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    },
+                    {
+                        "name": "fecha_desde",
+                        "in": "query",
+                        "description": "Fecha de inicio del periodo (formato: Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "fecha_hasta",
+                        "in": "query",
+                        "description": "Fecha de fin del periodo (formato: Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lista de recursos ordenados por número de reservas",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "nombre": {
+                                                "type": "string",
+                                                "example": "Aula 101"
+                                            },
+                                            "total_reservas": {
+                                                "type": "integer",
+                                                "example": 45
+                                            },
+                                            "tipo_recurso": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "nombre": {
+                                                        "type": "string",
+                                                        "example": "Aula"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/reservas": {
             "get": {
                 "tags": [
@@ -1589,6 +1966,352 @@
                     },
                     "422": {
                         "description": "La reserva ya está cancelada"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reservas/verificar-conflictos": {
+            "post": {
+                "tags": [
+                    "Reservas"
+                ],
+                "summary": "Verificar conflictos de reserva",
+                "description": "Verifica si hay conflictos de reserva para un recurso en un rango de fechas específico",
+                "operationId": "d1a88fd660f438e1c6a3536ff69974c6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "recurso_id",
+                                    "fecha_inicio",
+                                    "fecha_fin"
+                                ],
+                                "properties": {
+                                    "recurso_id": {
+                                        "description": "ID del recurso a verificar",
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "fecha_inicio": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2024-12-10 08:00:00"
+                                    },
+                                    "fecha_fin": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2024-12-10 10:00:00"
+                                    },
+                                    "reserva_id_excluir": {
+                                        "description": "ID de reserva a excluir de la búsqueda (opcional)",
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Resultado de la verificación de conflictos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "hay_conflicto": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "conflictos": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    },
+                                                    "fecha_inicio": {
+                                                        "type": "string",
+                                                        "example": "2024-12-10 08:00:00"
+                                                    },
+                                                    "fecha_fin": {
+                                                        "type": "string",
+                                                        "example": "2024-12-10 10:00:00"
+                                                    },
+                                                    "usuario": {
+                                                        "type": "string",
+                                                        "example": "Juan Pérez"
+                                                    },
+                                                    "recurso": {
+                                                        "type": "string",
+                                                        "example": "Aula 101"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reservas/reportes/por-usuario/{userId}": {
+            "get": {
+                "tags": [
+                    "Reservas"
+                ],
+                "summary": "Reporte de reservas por usuario",
+                "description": "Obtiene todas las reservas de un usuario específico con filtros opcionales de fecha y estado",
+                "operationId": "c927483b1746f098baaae3268b1ef55a",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "ID del usuario",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "estado",
+                        "in": "query",
+                        "description": "Filtrar por estado de la reserva",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "activa",
+                                "cancelada"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "fecha_desde",
+                        "in": "query",
+                        "description": "Fecha de inicio del periodo",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "fecha_hasta",
+                        "in": "query",
+                        "description": "Fecha de fin del periodo",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reporte de reservas del usuario",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "usuario": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Juan Pérez"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "juan@example.com"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "total_reservas": {
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "reservas_activas": {
+                                            "type": "integer",
+                                            "example": 8
+                                        },
+                                        "reservas_canceladas": {
+                                            "type": "integer",
+                                            "example": 7
+                                        },
+                                        "reservas": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "recurso": {
+                                                        "type": "string",
+                                                        "example": "Aula 101"
+                                                    },
+                                                    "fecha_inicio": {
+                                                        "type": "string",
+                                                        "example": "2024-12-10 08:00:00"
+                                                    },
+                                                    "fecha_fin": {
+                                                        "type": "string",
+                                                        "example": "2024-12-10 10:00:00"
+                                                    },
+                                                    "estado": {
+                                                        "type": "string",
+                                                        "example": "activa"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Usuario no encontrado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/reservas/reportes/estadisticas": {
+            "get": {
+                "tags": [
+                    "Reservas"
+                ],
+                "summary": "Estadísticas de uso del sistema",
+                "description": "Obtiene estadísticas generales del sistema de reservas, incluyendo totales, promedios y distribución por estado",
+                "operationId": "bf9b22e1c16171ee68d99c3085264cc9",
+                "parameters": [
+                    {
+                        "name": "fecha_desde",
+                        "in": "query",
+                        "description": "Fecha de inicio del periodo de análisis",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "fecha_hasta",
+                        "in": "query",
+                        "description": "Fecha de fin del periodo de análisis",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estadísticas del sistema",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "periodo": {
+                                            "properties": {
+                                                "desde": {
+                                                    "type": "string",
+                                                    "example": "2024-01-01"
+                                                },
+                                                "hasta": {
+                                                    "type": "string",
+                                                    "example": "2024-12-31"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "totales": {
+                                            "properties": {
+                                                "total_reservas": {
+                                                    "type": "integer",
+                                                    "example": 150
+                                                },
+                                                "reservas_activas": {
+                                                    "type": "integer",
+                                                    "example": 85
+                                                },
+                                                "reservas_canceladas": {
+                                                    "type": "integer",
+                                                    "example": 65
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "promedios": {
+                                            "properties": {
+                                                "reservas_por_usuario": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 5.2
+                                                },
+                                                "reservas_por_recurso": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 7.5
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "top_usuarios": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "usuario": {
+                                                        "type": "string",
+                                                        "example": "Juan Pérez"
+                                                    },
+                                                    "total_reservas": {
+                                                        "type": "integer",
+                                                        "example": 12
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
