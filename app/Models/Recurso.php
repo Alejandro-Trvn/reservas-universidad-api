@@ -3,6 +3,10 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\TipoRecurso;
+use App\Models\HorarioRecurso;
+use App\Models\BloqueoRecurso;
+use App\Models\Reserva;
 
 class Recurso extends Model
 {
