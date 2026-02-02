@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\RecursoController;
 use App\Http\Controllers\Api\ReservaController;
 use App\Http\Controllers\Api\NotificacionController;
 use App\Http\Controllers\Api\UsuariosController;
+use App\Http\Controllers\Api\RolesController;
 use App\Http\Controllers\Api\HistorialReservaController;
 
 /*
@@ -44,6 +45,15 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/{id}', [UsuariosController::class, 'show']);
         Route::put('/{id}', [UsuariosController::class, 'update']);
         Route::delete('/{id}', [UsuariosController::class, 'destroy']); // desactivar
+    });
+
+    // ========= ROLES (solo admin) =========
+    Route::prefix('roles')->group(function () {
+        Route::get('/', [RolesController::class, 'index']);
+        Route::post('/', [RolesController::class, 'store']);
+        Route::get('/{id}', [RolesController::class, 'show']);
+        Route::put('/{id}', [RolesController::class, 'update']);
+        Route::delete('/{id}', [RolesController::class, 'destroy']); // desactivar (estado=0)
     });
 
     // Perfil del usuario autenticado

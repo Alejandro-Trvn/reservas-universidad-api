@@ -287,6 +287,7 @@ class UsuariosController extends Controller
             'email'   => 'sometimes|required|email|unique:users,email,' . $usuario->id,
             'role_id' => 'sometimes|required|exists:roles,id',
             'estado'  => 'sometimes|required|integer|in:0,1',
+            'password' => 'sometimes|nullable|string|min:6',
         ]);
 
         // Opcional: evitar que un admin se desactive a sí mismo
@@ -294,6 +295,12 @@ class UsuariosController extends Controller
             return response()->json([
                 'message' => 'No puede desactivar su propio usuario.'
             ], 422);
+        }
+
+        // Si se envió password, hashearlo y forzar cambio de contraseña
+        if (isset($data['password']) && $data['password']) {
+            $data['password'] = Hash::make($data['password']);
+            $data['must_change_password'] = true;
         }
 
         $usuario->update($data);
