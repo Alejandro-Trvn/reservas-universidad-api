@@ -301,7 +301,7 @@ class RecursoController extends Controller
             $recurso->update($data);
         } else {
             $data = $request->validate([
-                'tipo_recurso_id' => 'sometimes|required|exists:tipos_recursos,id',
+                'tipo_recurso_id' => 'sometimes|required|exists:tipo_recursos,id',
                 'nombre' => 'sometimes|required|string|max:100',
                 'descripcion' => 'nullable|string',
                 'ubicacion' => 'nullable|string|max:150',
