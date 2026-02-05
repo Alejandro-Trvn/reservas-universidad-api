@@ -79,13 +79,13 @@ class ReservaController extends Controller
      *     summary="Listar reservas",
      *     description="Obtiene la lista de reservas. Los administradores ven todas las reservas con filtros opcionales. Los usuarios normales solo ven sus propias reservas.",
      *     security={{"bearerAuth": {}}},
-     *     @OA\Parameter(
-     *         name="estado",
-     *         in="query",
-     *         description="Filtrar por estado (solo admin)",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"activa", "cancelada"})
-     *     ),
+    *     @OA\Parameter(
+    *         name="estado",
+    *         in="query",
+    *         description="Filtrar por estado (solo admin)",
+    *         required=false,
+    *         @OA\Schema(type="string", enum={"activa", "cancelada", "finalizada"})
+    *     ),
      *     @OA\Parameter(
      *         name="user_id",
      *         in="query",
@@ -386,7 +386,7 @@ class ReservaController extends Controller
      *             @OA\Property(property="recurso_id", type="integer", example=4, description="Solo editable por admin"),
      *             @OA\Property(property="fecha_inicio", type="string", format="date-time", example="2025-12-10 09:00:00", description="Para usuarios debe ser posterior a ahora"),
      *             @OA\Property(property="fecha_fin", type="string", format="date-time", example="2025-12-10 11:00:00", description="Debe ser posterior a fecha_inicio"),
-     *             @OA\Property(property="estado", type="string", example="activa", enum={"activa", "cancelada"}, description="Solo editable por admin"),
+    *             @OA\Property(property="estado", type="string", example="activa", enum={"activa", "cancelada", "finalizada"}, description="Solo editable por admin"),
      *             @OA\Property(property="comentarios", type="string", example="Comentarios actualizados", maxLength=500)
      *         )
      *     ),
@@ -463,7 +463,7 @@ class ReservaController extends Controller
                 'recurso_id' => 'sometimes|required|exists:recursos,id',
                 'fecha_inicio' => 'sometimes|required|date_format:Y-m-d H:i:s',
                 'fecha_fin' => 'sometimes|required|date_format:Y-m-d H:i:s|after:fecha_inicio',
-                'estado' => 'sometimes|required|in:activa,cancelada',
+                'estado' => 'sometimes|required|in:activa,cancelada,finalizada',
                 'comentarios' => 'nullable|string|max:500',
             ]);
 
@@ -533,9 +533,9 @@ class ReservaController extends Controller
         }
 
         // ========== RAMA DUEÑO (USUARIO NORMAL) ==========
-        if ($reserva->estado === 'cancelada') {
+        if ($reserva->estado === 'cancelada' || $reserva->estado === 'finalizada') {
             return response()->json([
-                'message' => 'No puede modificar una reserva cancelada. Cree una nueva reserva.'
+                'message' => 'No puede modificar una reserva cancelada o finalizada. Cree una nueva reserva.'
             ], 422);
         }
 
@@ -692,6 +692,10 @@ class ReservaController extends Controller
             return response()->json(['message' => 'La reserva ya está cancelada'], 422);
         }
 
+        if ($reserva->estado === 'finalizada') {
+            return response()->json(['message' => 'La reserva ya está finalizada y no puede cancelarse'], 422);
+        }
+
         $reserva->estado = 'cancelada';
         $reserva->save();
 
@@ -833,13 +837,13 @@ class ReservaController extends Controller
      *         required=true,
      *         @OA\Schema(type="integer")
      *     ),
-     *     @OA\Parameter(
-     *         name="estado",
-     *         in="query",
-     *         description="Filtrar por estado de la reserva",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"activa", "cancelada"})
-     *     ),
+    *     @OA\Parameter(
+    *         name="estado",
+    *         in="query",
+    *         description="Filtrar por estado de la reserva",
+    *         required=false,
+    *         @OA\Schema(type="string", enum={"activa", "cancelada", "finalizada"})
+    *     ),
      *     @OA\Parameter(
      *         name="fecha_desde",
      *         in="query",
@@ -909,6 +913,8 @@ class ReservaController extends Controller
         $totalReservas = $reservas->count();
         $reservasActivas = $reservas->where('estado', 'activa')->count();
         $reservasCanceladas = $reservas->where('estado', 'cancelada')->count();
+        $reservasFinalizadas = $reservas->where('estado', 'finalizada')->count();
+        $reservasFinalizadas = $reservas->where('estado', 'finalizada')->count();
 
         return response()->json([
             'usuario' => [
@@ -919,6 +925,7 @@ class ReservaController extends Controller
             'total_reservas' => $totalReservas,
             'reservas_activas' => $reservasActivas,
             'reservas_canceladas' => $reservasCanceladas,
+            'reservas_finalizadas' => $reservasFinalizadas,
             'reservas' => $reservas->map(function ($reserva) {
                 return [
                     'id' => $reserva->id,
@@ -965,7 +972,8 @@ class ReservaController extends Controller
      *             @OA\Property(property="totales", type="object",
      *                 @OA\Property(property="total_reservas", type="integer", example=150),
      *                 @OA\Property(property="reservas_activas", type="integer", example=85),
-     *                 @OA\Property(property="reservas_canceladas", type="integer", example=65)
+     *                 @OA\Property(property="reservas_canceladas", type="integer", example=65),
+     *                 @OA\Property(property="reservas_finalizadas", type="integer", example=50)
      *             ),
      *             @OA\Property(property="promedios", type="object",
      *                 @OA\Property(property="reservas_por_usuario", type="number", format="float", example=5.2),
@@ -1001,6 +1009,7 @@ class ReservaController extends Controller
         $totalReservas = $reservas->count();
         $reservasActivas = $reservas->where('estado', 'activa')->count();
         $reservasCanceladas = $reservas->where('estado', 'cancelada')->count();
+        $reservasFinalizadas = $reservas->where('estado', 'finalizada')->count();
 
         // Usuarios con más reservas
         $topUsuarios = Reserva::with('user')
@@ -1045,6 +1054,7 @@ class ReservaController extends Controller
                 'total_reservas' => $totalReservas,
                 'reservas_activas' => $reservasActivas,
                 'reservas_canceladas' => $reservasCanceladas,
+                'reservas_finalizadas' => $reservasFinalizadas,
             ],
             'promedios' => [
                 'reservas_por_usuario' => $promedioReservasPorUsuario,

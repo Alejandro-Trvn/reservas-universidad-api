@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Recurso;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 /**
  * @OA\Tag(
@@ -445,39 +446,69 @@ class RecursoController extends Controller
             return response()->json(['message' => 'Recurso no encontrado'], 404);
         }
 
-        $fechaInicio = $request->fecha_inicio;
-        $fechaFin = $request->fecha_fin;
+        $fechaInicio = Carbon::parse($request->fecha_inicio);
+        $fechaFin = Carbon::parse($request->fecha_fin);
 
         // Buscar reservas activas que se traslapen con el rango solicitado
         $reservas = $recurso->reservas()
             ->where('estado', 'activa')
             ->where(function ($query) use ($fechaInicio, $fechaFin) {
-                $query->whereBetween('fecha_inicio', [$fechaInicio, $fechaFin])
-                    ->orWhereBetween('fecha_fin', [$fechaInicio, $fechaFin])
+                $query->whereBetween('fecha_inicio', [$fechaInicio->toDateTimeString(), $fechaFin->toDateTimeString()])
+                    ->orWhereBetween('fecha_fin', [$fechaInicio->toDateTimeString(), $fechaFin->toDateTimeString()])
                     ->orWhere(function ($q) use ($fechaInicio, $fechaFin) {
-                        $q->where('fecha_inicio', '<=', $fechaInicio)
-                            ->where('fecha_fin', '>=', $fechaFin);
+                        $q->where('fecha_inicio', '<=', $fechaInicio->toDateTimeString())
+                            ->where('fecha_fin', '>=', $fechaFin->toDateTimeString());
                     });
             })
             ->with('user')
             ->get();
 
-        $disponible = $reservas->isEmpty();
+        // Construir array por días entre fechaInicio y fechaFin
+        $dias = [];
+        $current = $fechaInicio->copy()->startOfDay();
+        $endDay = $fechaFin->copy()->startOfDay();
+
+        while ($current->lte($endDay)) {
+            $dayStart = $current->copy()->startOfDay();
+            $dayEnd = $current->copy()->endOfDay();
+
+            $reservasEnDia = $reservas->filter(function ($reserva) use ($dayStart, $dayEnd) {
+                $resIni = Carbon::parse($reserva->fecha_inicio);
+                $resFin = Carbon::parse($reserva->fecha_fin);
+
+                return $resIni->lte($dayEnd) && $resFin->gte($dayStart);
+            })->values();
+
+            $dias[] = [
+                'fecha' => $current->toDateString(),
+                'disponible' => $reservasEnDia->isEmpty(),
+                'reservas' => $reservasEnDia->map(function ($reserva) {
+                    return [
+                        'id' => $reserva->id,
+                        'fecha_inicio' => $reserva->fecha_inicio,
+                        'fecha_fin' => $reserva->fecha_fin,
+                        'usuario' => $reserva->user->name ?? 'N/A',
+                    ];
+                })->values(),
+            ];
+
+            $current->addDay();
+        }
+
+        // disponible_periodo: false only if ALL days are occupied; otherwise true
+        $ocupadoTodos = collect($dias)->every(function ($d) {
+            return $d['disponible'] === false;
+        });
+
+        $disponiblePeriodo = !$ocupadoTodos;
 
         return response()->json([
             'recurso_id' => $recurso->id,
             'recurso_nombre' => $recurso->nombre,
-            'fecha_inicio' => $fechaInicio,
-            'fecha_fin' => $fechaFin,
-            'disponible' => $disponible,
-            'reservas_existentes' => $reservas->map(function ($reserva) {
-                return [
-                    'id' => $reserva->id,
-                    'fecha_inicio' => $reserva->fecha_inicio,
-                    'fecha_fin' => $reserva->fecha_fin,
-                    'usuario' => $reserva->user->name ?? 'N/A',
-                ];
-            }),
+            'fecha_inicio' => $fechaInicio->toDateTimeString(),
+            'fecha_fin' => $fechaFin->toDateTimeString(),
+            'disponible_periodo' => $disponiblePeriodo,
+            'dias' => $dias,
         ]);
     }
 
