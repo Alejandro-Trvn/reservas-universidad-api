@@ -209,7 +209,6 @@ class UsuariosController extends Controller
      */
     public function show($id)
     {
-        $this->ensureIsAdmin();
 
         $usuario = User::with('role')->find($id);
 
@@ -378,14 +377,14 @@ class UsuariosController extends Controller
      *     path="/api/usuarios/perfil",
      *     tags={"Usuarios"},
      *     summary="Actualizar perfil del usuario autenticado",
-     *     description="Permite al usuario autenticado actualizar su nombre y correo electrónico. No se puede modificar el rol ni el estado.",
+     *     description="Permite al usuario autenticado actualizar su nombre y opcionalmente su correo electrónico. No se puede modificar el rol ni el estado.",
      *     security={{"bearerAuth": {}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name", "email"},
+     *             required={"name"},
      *             @OA\Property(property="name", type="string", example="Mi Nuevo Nombre", maxLength=100),
-     *             @OA\Property(property="email", type="string", format="email", example="mi.nuevo.email@universidad.edu")
+     *             @OA\Property(property="email", type="string", format="email", example="mi.nuevo.email@universidad.edu", description="Campo opcional")
      *         )
      *     ),
      *     @OA\Response(
@@ -429,7 +428,7 @@ class UsuariosController extends Controller
         // 3) Validar SOLO name y email
         $data = $request->validate([
             'name'  => 'required|string|max:100',
-            'email' => 'required|email|unique:users,email,' . $user->id,
+            'email' => 'sometimes|required|email|unique:users,email,' . $user->id,
         ]);
 
         // 4) Actualizar
